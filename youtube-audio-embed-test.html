@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>اختبار تضمين يوتيوب — يعمل أو لا؟</title>
+  <style>
+    body{font-family:system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:#0b0b0c; color:#fff; padding:24px; line-height:1.6}
+    .card{max-width:780px; margin:auto; background:#141518; border:1px solid #24262b; border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    code{background:#1e1f25; padding:2px 6px; border-radius:6px}
+    iframe{width:100%; aspect-ratio:16/9; border:0; border-radius:12px}
+    .row{display:flex; gap:12px; align-items:center; margin-top:12px}
+    input[type="text"]{flex:1; padding:10px; border-radius:10px; border:1px solid #2b2e36; background:#0f1013; color:#fff}
+    button{padding:10px 14px; border-radius:10px; border:0; background:#2a2e36; color:#fff; cursor:pointer}
+    button:hover{background:#343944}
+    .small{opacity:.85; font-size:.95rem}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>اختبار تضمين يوتيوب</h1>
+    <p>لو ظهر عندك الفيديو هنا بدون خطأ 153، يبقى المشكلة من إعدادات موقعك (CSP/Referrer/Sandbox). لو ظهر الخطأ هنا كمان، يبقى المشكلة من المتصفح/الإضافات/الشبكة.</p>
+
+    <h2>تضمين قياسي (يوتيوب بدون كوكيز)</h2>
+    <p class="small">عدّل <code>VIDEO_ID</code> بمعرّف أي فيديو قابل للتضمين. مثال: لو الرابط <code>https://www.youtube.com/watch?v=dQw4w9WgXcQ</code> فالمعرّف هو <code>dQw4w9WgXcQ</code>.</p>
+    <div class="row">
+      <input id="vid" type="text" placeholder="VIDEO_ID" value="dQw4w9WgXcQ" />
+      <button onclick="load()">تحميل</button>
+    </div>
+    <div style="margin:12px 0">
+      <iframe id="player1"
+        src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?playsinline=1"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen loading="lazy">
+      </iframe>
+    </div>
+
+    <h2>إطار مخفي للتشغيل كصوت فقط (اختبار)</h2>
+    <p class="small">نفس المصدر لكن الإطار مخفي بالـCSS — لو ده يعمل، ففكرتك هتشتغل.</p>
+    <iframe id="player2"
+      style="position:absolute; left:-99999px; width:1px; height:1px;"
+      src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?playsinline=1"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allow="autoplay; encrypted-media; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+
+    <script>
+      function load(){
+        var id = document.getElementById('vid').value.trim() || 'dQw4w9WgXcQ';
+        var base = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) + '?playsinline=1';
+        document.getElementById('player1').src = base;
+        document.getElementById('player2').src = base;
+      }
+    </script>
+
+    <hr style="border-color:#24262b; margin:20px 0">
+    <h2>لو لسه فيه خطأ 153</h2>
+    <ul class="small">
+      <li>تأكد إن <code>frame-src</code> أو <code>child-src</code> في سياسة الأمان (CSP) تسمح بـ <code>https://www.youtube-nocookie.com</code> و <code>https://www.youtube.com</code> و <code>https://*.ytimg.com</code> و <code>https://*.google.com</code>.</li>
+      <li>لو بتستخدم ترويسة <code>Referrer-Policy: no-referrer</code> غيّرها إلى <code>strict-origin-when-cross-origin</code> أو احذفها، أو على الأقل أضف <code>referrerpolicy</code> على iframe كما فوق.</li>
+      <li>إزالة الخاصية <code>sandbox</code> من iframe أو تأكد أنها تحتوي <code>allow-same-origin allow-scripts allow-popups</code> لو مستخدمة.</li>
+      <li>تأكد إن صفحتك تُحمَّل عبر HTTPS وليس HTTP (تجنّب mixed content).</li>
+      <li>جرّب نافذة خاصة/تعطيل إضافات حظر الإعلانات/الخصوصية أو متصفح آخر.</li>
+    </ul>
+
+    <p class="small">لو الصفحة دي نفسها اشتغلت كويس عندك لكن موقعك لأ، ابعتلي ترويسات الـCSP/HTTP أو كود التضمين اللي بتستخدمه وأنا أصلّحه لك.</p>
+  </div>
+</body>
+</html>
