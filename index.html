@@ -54,6 +54,7 @@
             opacity: .85;
         }
 
+        /* نخفي iframe لكن نخليه يشتغل */
         #yt-holder {
             position: absolute;
             left: -99999px;
@@ -81,48 +82,50 @@
         </div>
     </div>
 
+    <!-- حامل الـiframe المخفي -->
     <div id="yt-holder"></div>
 
-
-    <iframe width="560" height="315" src="https://www.youtube.com/embed/DZteznd47B4?si=0cJ8ivT___CJ34nu"
-        title="YouTube video player" frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
-    <!-- سكربت الـ API الصحيح -->
-    <script src="https://www.youtube.com/embed/DZteznd47B4?si=0cJ8ivT___CJ34nu"></script>
+    <!-- حمّل IFrame API الصحيح (مهم) -->
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script>
         let player, duration = 0, uiReady = false, tick;
-        const VIDEO_ID = '6jVHREdafT8';
 
+        // استخدم نفس الفيديو اللي حاطه: DZteznd47B4
+        const VIDEO_ID = 'DZteznd47B4';
+
+        // يُستدعى تلقائيًا بعد تحميل الـAPI
         window.onYouTubeIframeAPIReady = function () {
             player = new YT.Player('yt-holder', {
                 videoId: VIDEO_ID,
-                playerVars: { controls: 0, rel: 0, modestbranding: 1, playsinline: 1, autoplay: 1, mute: 1 },
+                playerVars: {
+                    controls: 0, rel: 0, modestbranding: 1, playsinline: 1,
+                    autoplay: 1, mute: 1   // يبدأ مكتوم (مسموح من المتصفح)
+                },
                 events: { onReady: onReady, onStateChange: onStateChange }
             });
         };
 
-        const $ = (sel) => document.querySelector(sel);
-        const playBtn = $('#playPause');
-        const seek = $('#seek');
-        const vol = $('#vol');
-        const muteBtn = $('#mute');
-        const nowEl = $('#now');
-        const durEl = $('#dur');
+        const $ = (s) => document.querySelector(s);
+        const playBtn = $('#playPause'), seek = $('#seek'), vol = $('#vol'), muteBtn = $('#mute');
+        const nowEl = $('#now'), durEl = $('#dur');
 
-        function fmt(t) { if (!isFinite(t)) t = 0; const m = Math.floor(t / 60), s = Math.floor(t % 60); return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0'); }
+        const fmt = (t) => { if (!isFinite(t)) t = 0; const m = Math.floor(t / 60), s = Math.floor(t % 60); return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0'); };
 
         function onReady() {
+            // اضبط الصوت واقرأ المدة
             player.setVolume(parseInt(vol.value, 10));
             duration = player.getDuration();
             if (duration) durEl.textContent = fmt(duration);
 
-            // ابدأ التشغيل بصوت مكتوم
-            player.mute();
-            player.playVideo();
+            // بعض الفيديوهات تعود بالمدة بعد لحظات
+            const wait = setInterval(() => {
+                const d = player.getDuration();
+                if (d && d !== duration) {
+                    duration = d; durEl.textContent = fmt(duration); clearInterval(wait);
+                }
+            }, 300);
 
-            // تحديث الوقت
+            // تحديث الوقت والمؤشر
             tick = setInterval(() => {
                 const t = player.getCurrentTime();
                 if (isFinite(t) && duration) {
@@ -141,19 +144,20 @@
                 playBtn.textContent = '▶️ تشغيل';
             }
             if (e.data === YT.PlayerState.ENDED) {
-                player.seekTo(0, true);
-                seek.value = 0;
+                player.seekTo(0, true); seek.value = 0;
             }
         }
 
         function bindUI() {
             if (uiReady) return; uiReady = true;
 
+            // أول ضغطة: نلغي الكتم ونستمر في التشغيل
             playBtn.addEventListener('click', () => {
                 const state = player.getPlayerState();
-                if (state === YT.PlayerState.PLAYING) player.pauseVideo();
-                else {
-                    if (player.isMuted()) player.unMute();
+                if (state === YT.PlayerState.PLAYING) {
+                    player.pauseVideo();
+                } else {
+                    if (player.isMuted()) player.unMute(); // هنا الصوت يشتغل
                     player.playVideo();
                 }
             });
@@ -171,16 +175,10 @@
             });
 
             muteBtn.addEventListener('click', () => {
-                if (player.isMuted()) {
-                    player.unMute();
-                    muteBtn.textContent = '🔇 كتم';
-                } else {
-                    player.mute();
-                    muteBtn.textContent = '🔊 إلغاء الكتم';
-                }
+                if (player.isMuted()) { player.unMute(); muteBtn.textContent = '🔇 كتم'; }
+                else { player.mute(); muteBtn.textContent = '🔊 إلغاء الكتم'; }
             });
         }
-
     </script>
 </body>
 
